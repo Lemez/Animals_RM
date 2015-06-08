@@ -1,0 +1,197 @@
+Steps to make Animals game on ios
+
+0) Omniauth signin to save settings, leaderboard etc
+0.5) Settings:
+
+	Language:
+	 (ios keyboard to show by default) / (dictionaries to use for game texts)
+
+	 Parents email address:
+	 Option to email parents with kids progress each time
+
+	 Parents notifications :
+	 Email me every game / once a day / once a week / never
+
+	 Instructions:
+	 How to Play
+
+	 See Scores This Session:
+	 @session_scores (key => value)
+
+
+1) Root controller: (LANDSCAPE)
+	beforeloading:
+		@session_scores= {}
+
+	didload:
+
+		Nav R: Settings
+
+		Background Colour
+
+		Autoplay (on/off)
+
+		Text Input box (with focus?)
+		Submit button
+
+			- Validate text input as valid
+				length, alpha, spaces
+
+2) Countdown screen (LANDSCAPE)
+
+	require 'sugarcube-timer'
+	
+	Countdown Timer
+	Rocket Animation, state 1 and state 2
+	Sound player: ticks + liftoff
+
+	letter hash -> cells (hide) eg {"L" : false, "K": false, "J": true} - correct and 2 x random letters
+
+	number_of_cells = validated_word.length
+
+	images  -> cells (hide)
+	placeholder_images  -> cells (show)
+
+
+3) Table Controller (LANDSCAPE)
+
+	beforeloading:
+
+		@tries = 0
+		cell 1 image = image
+		cell 1 letter = letter (hidden)
+
+		low array = cell 1 letter hash
+
+	didload:
+		display: 	cell 1 image,
+					low array (cell 1) 
+
+		animation: 	cell 1 image,
+					low array (cell 1) 
+
+		low_array.item.ontap:
+
+			@tries += 1
+
+			if low_array.item.text == cell1.letter 
+				do correct stuff
+
+			if low_array.item.text != cell1.letter 
+				do incorrect stuff
+
+
+		correct_stuff:
+
+			play sound (letter)
+			show and animate cell 1 letter
+			stop cell 1 image animation
+			replace cell 2 placeholder with image
+			show and animate cell 2 letter  
+			low array = cell 2 letter hash
+
+		incorrect_stuff:
+
+			show full screen overlay
+			add letter image to overlay
+			animate letter image on overlay
+			add letter to overlay
+			play sound (letter)
+			hide/fade after 3 seconds
+
+		if no_more_letters
+
+			go on to: :end sequence
+
+			end sequence:
+
+				play all_correct_tune
+				do special animation
+				calculate and save scores
+
+				calculate_and_save_scores:
+
+					@session_scores[validated_word] = Float (validated_word.length/@tries * 100) 
+				
+						# (3/5) * 100 
+						# 'toast' => 60
+
+					email_parent_with_score if he/she wants it
+
+				if AutoPlay:
+					go to Picture Controller after 5 seconds
+				else
+					show and animate play_again_button
+					play_again_button.on.tap: 
+						Go to RootController
+				end	
+		end
+
+
+4) Picture Controller
+
+Level 1
+
+	Get images from icons_array
+
+	Table display 3 x 5 (scrollable)
+
+	Cell -> image (show)
+	Cell -> word (hidden)
+
+	Cell.on.tap:
+
+		display overlay :full
+		overlay image: cell image (fittoWindow)
+		overlay text: "Use this one?"
+		overlay button: "Yes!"
+
+		overlay_button.on.tap:
+			validated_word = cell.word
+			pop icon from icons_array (so it won't show up the same for the next game)
+			go to Countdown screen
+
+		overlay.on.tap:
+			hide overlay
+
+Level 2
+
+	do slot machine animation
+
+		slot machine animation:	
+				multiply icons array several times eg [1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]
+				set them all up as a tableview?
+				flick through them horizontally (reusable)
+				play slot machine whizzing sound
+
+			Select image to stop on:
+				choose image from icons_array (that is not a current key in @sessions_score) 
+				slowdown
+
+			slowdown:
+				play slowing down sound
+				slow down images
+
+			slot machine stop on image
+				play slot machine stopping sound
+
+				animate image to larger size of overlay window: cell image (fittoWindow)
+				overlay button: "Play!"
+				validated_word = cell.word
+				
+				go to Countdown screen
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
